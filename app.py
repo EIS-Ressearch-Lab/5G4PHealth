@@ -2,7 +2,7 @@
 
 import streamlit as st
 
-st.title('Welcome to 5G4PHealth!')
+st.markdown("<h1 style='text-align: center;'>Welcome to 5G4PHealth!</h1>", unsafe_allow_html=True)
 
 import cv2
 import mediapipe as mp

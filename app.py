@@ -86,8 +86,66 @@ class CustomPDF(FPDF):
         # Set black background on every page automatically
         self.set_fill_color(0, 0, 0)
         self.rect(0, 0, 210, 297, 'F')
+
+def generate_pdf(pose_image_path, spider_plot):
+    """Generates a PDF with the pose estimation image. FPDF document (A4 size, 210mm width x 297mm height)"""
+    pdf = CustomPDF()
+    pdf.set_auto_page_break(auto=True, margin=15)
+    pdf.add_page()
+
+    # Add padding to the image
+    if pose_image_path:
+        pose_img = Image.open(pose_image_path)
+        width, height = pose_img.size
+
+        # Create a new image with padding
+        padded_img = ImageOps.expand(pose_img, border=(0, 1, 0, 1), fill=(0, 0, 0))  # Add black padding
+        padded_pose_path = tempfile.mktemp(suffix=".png")
+        padded_img.save(padded_pose_path)
+
+        # 🔹 Reduce image size in the PDF
+        pdf.image(padded_pose_path, x=10, y=25, h=49, w=88)  # Make it smaller (1/8 of the page)
+
+     # ✅ Spider Plot (Top Right)
+    spider_plot_path = tempfile.mktemp(suffix=".png")
+    spider_plot.update_layout(paper_bgcolor="black", font_color="white") 
+    spider_plot.write_image(spider_plot_path)
+    pdf.image(spider_plot_path, x=75, y=31, w=125)  # Adjusted placement
+
+    pdf.set_text_color(255, 255, 255)  # White text
+    # add text to the pdf
+    pdf.set_xy(10, 10)  # Reset cursor
+    # add text
+    pdf.set_font("Arial", style='BU', size=18)
+    pdf.cell(190, 10, "Your Mobility Scorecard from 5G4P Health", ln=True, align='C')
+
+
+    # # show asymmetry plot
+    # asymmetry_plot_path = tempfile.mktemp(suffix=".png")
+    # asymmetry_plot.update_layout(paper_bgcolor="black", plot_bgcolor="black", font_color="white")
+    # asymmetry_plot.write_image(asymmetry_plot_path)
+    # pdf.image(asymmetry_plot_path, x=10, y=150, w=190)  # Adjusted placement
+
+    # display the ROM table
+    # rom_chart_path = tempfile.mktemp(suffix=".png")
+    # fig, ax = plt.subplots(figsize=(4.5, 2.3))  # Adjust size
+
+    # ax.axis('tight')
+    # ax.axis('off')
+    # table = ax.table(cellText=df_rom.values, colLabels=df_rom.columns, cellLoc='center', loc='center')
+    # table.auto_set_font_size(False)
+    # table.set_fontsize(11)
+    # table.scale(1.25, 1.25)  # Increase size by 1.5
+    # table.auto_set_column_width([0, 1, 2, 3])  # Adjust column width
+    
+    # ✅ Save PDF
+    pdf_file_path = tempfile.mktemp(suffix=".pdf")
+    pdf.output(pdf_file_path)
+    
+    return pdf_file_path
+
         
-def generate_pdf(pose_image_path, df_rom, spider_plot, asymmetry_plot, text_info, camera_side, gait_type):
+def generate_pdf2(pose_image_path, df_rom, spider_plot, asymmetry_plot):
     """Generates a PDF with the pose estimation, given plots, and text. FPDF document (A4 size, 210mm width x 297mm height)"""
     pdf = CustomPDF()
     pdf.set_auto_page_break(auto=True, margin=15)
@@ -97,7 +155,7 @@ def generate_pdf(pose_image_path, df_rom, spider_plot, asymmetry_plot, text_info
     pdf.set_text_color(255, 255, 255)  # White text
     pdf.set_font("Arial", size=9)  # Small font
     current_date = datetime.today().strftime("%m/%d/%Y")  # Automatically fetch today's date
-    location_text = f"Date: {current_date}\nLocation: Tri N Run Mobile\nGait Type: {gait_type.capitalize()}"
+    location_text = f"Date: {current_date}"
     pdf.multi_cell(0, 3.5, location_text)  # Multi-line cell to properly format text
 
     # ✅ Report Title (Centered)
@@ -159,76 +217,7 @@ def generate_pdf(pose_image_path, df_rom, spider_plot, asymmetry_plot, text_info
     table.set_fontsize(11)
     table.scale(1.25, 1.25)  # Increase size by 1.5
     table.auto_set_column_width([0, 1, 2, 3])  # Adjust column width
-
-    # Define ranges for color classification
-    # Define ranges for color classification
-    if camera_side == "side" and gait_type == "walking": 
-        ankle_good = (20, 45)
-        ankle_moderate = (15, 20)
-        ankle_bad = (0, 55)#(0, 10)
-
-        knee_good = (50, 70)
-        knee_moderate = (40, 50)
-        knee_bad = (0, 80) #(0, 40)
-
-        hip_good = (25, 45)
-        hip_moderate = (15, 25)
-        hip_bad = (0, 15)
-
-        spine_good = (0, 5)
-        spine_moderate = (5, 10)
-        spine_bad = (10, 30)
-
-    if camera_side == "back" and gait_type == "walking": 
-        ankle_good = (20, 50)
-        ankle_moderate = (15, 20)
-        ankle_bad = (0, 15)
-
-        knee_good = (0, 5)
-        knee_moderate = (5, 10)
-        knee_bad = (10, 30)
-
-        hip_good = (0, 10)
-        hip_moderate = (10, 15)
-        hip_bad = (15, 50)
-
-        spine_good = (0, 5)
-        spine_moderate = (5, 10)
-        spine_bad = (10, 30)
-
-    if camera_side == "side" and gait_type == "running": 
-        ankle_good = (65, 75)
-        ankle_moderate = (55, 85)
-        ankle_bad = (55, 95)
-
-        knee_good = (120, 130)
-        knee_moderate = (90, 175)
-        knee_bad = (90, 175)
-
-        hip_good = (60, 70)
-        hip_moderate = (40, 90)
-        hip_bad = (40, 90)
-
-        spine_good = (5, 15)
-        spine_moderate = (2, 20)
-        spine_bad = (0, 30)
-
-    if camera_side == "back" and gait_type == "running":
-        ankle_good = (20, 60)
-        ankle_moderate = (15, 20)
-        ankle_bad = (0, 15)
-
-        knee_good = (0, 5)
-        knee_moderate = (5, 12)
-        knee_bad = (12, 30)
-
-        hip_good = (0, 10)
-        hip_moderate = (10, 20)
-        hip_bad = (20, 40)
-
-        spine_good = (1, 10)
-        spine_moderate = (10, 20)
-        spine_bad = (20, 30)
+   
 
     def get_color(value, good_range, moderate_range):
         """Assigns a color based on the ROM classification."""
@@ -240,38 +229,18 @@ def generate_pdf(pose_image_path, df_rom, spider_plot, asymmetry_plot, text_info
             return 'yellow'
         else:
             return "lightcoral"
+   
+    rom_value = df_rom['Range of Motion (°)'].iloc[i]
 
-    # Apply colors to the first and last columns
-    for i, joint in enumerate(df_rom['Joint']):
-        if joint == 'Spine Segment':
-            good_range, moderate_range = spine_good, spine_moderate
-        elif 'Hip' in joint:
-            good_range, moderate_range = hip_good, hip_moderate
-        elif 'Knee' in joint:
-            good_range, moderate_range = knee_good, knee_moderate
-        elif 'Ankle' in joint:
-            good_range, moderate_range = ankle_good, ankle_moderate
+    # change color of 2nd, 3rd columns
+    cell = table[(i + 1, 1)]
+    cell.set_text_props(color="white")
+    cell = table[(i + 1, 2)]
+    cell.set_text_props(color="white")
 
-        rom_value = df_rom['Range of Motion (°)'].iloc[i]
-        color = get_color(rom_value, good_range, moderate_range)
-
-        # Change color of the first column (Joint names)
-        cell = table[(i + 1, 0)]
-        cell.set_text_props(color=color)
-
-        # Change color of the last column (Range of Motion)
-        cell = table[(i + 1, len(df_rom.columns) - 1)]
-        cell.set_text_props(color=color)
-
-        # change color of 2nd, 3rd columns
-        cell = table[(i + 1, 1)]
-        cell.set_text_props(color="white")
-        cell = table[(i + 1, 2)]
-        cell.set_text_props(color="white")
-
-        for i in range(4):
-            cell = table[(0, i)]
-            cell.set_text_props(color="white", weight='bold')     
+    for i in range(4):
+        cell = table[(0, i)]
+        cell.set_text_props(color="white", weight='bold')     
 
     # Set the background color of the chart to black
     for key, cell in table._cells.items():
@@ -287,116 +256,22 @@ def generate_pdf(pose_image_path, df_rom, spider_plot, asymmetry_plot, text_info
 
     pdf.ln(155)  # Adjust based on vertical layout
    
-    joint_color_map = {
-        "spine": (200, 162, 200),  # Purple
-        "left hip": (144, 238, 144),    # Green
-        "right hip": (144, 238, 144),    # Green
-        "left knee": (173, 216, 230),   # Blue
-        "right knee": (173, 216, 230),   # Blue
-        "left ankle": (255, 182, 193),   # Red
-        "right ankle": (255, 182, 193)   # Red
-    }
-    font_size=12
-
-    for joint in ["spine segment summary", "left hip summary", "right hip summary", "left knee summary", "right knee summary", "left ankle summary", "right ankle summary"]:
-        summary = text_info.get(joint, "")
-        if summary:
-            color = (255, 255, 255)
-            pdf.set_text_color(*color)
-            pdf.set_font("Arial", style='B', size=font_size)
-            label = joint.title() + ": "
-            pdf.write(font_size / 2, label)
-            pdf.set_font("Arial", size=font_size)
-            pdf.write(font_size / 2, summary + "\n")
-            pdf.ln(1)    
-
-    pdf.ln(200)  # Spacing before bottom text section
-    
     pdf.set_text_color(255, 215, 0)  # Gold Text for Highlights
     pdf.set_font("Arial", style='B', size=14)
-    pdf.cell(0, 10, "Key Insights from Your Gait", ln=True)
-    
-    for joint in ["spine", "left hip", "right hip", "left knee", "right knee", "left ankle", "right ankle"]:
-        insight = text_info.get(joint, "")
-        if insight:
-            color = joint_color_map[joint]
-            pdf.set_text_color(*color)
-            pdf.set_font("Arial", style='B', size=font_size)
-            label = joint.title() + ": "
-            pdf.write(font_size / 2, label)
-            pdf.set_font("Arial", size=font_size)
-            pdf.write(font_size / 2, insight + "\n")
-            pdf.ln(2)
-        
-    spine_text = '''A key indicator of your posture and alignment. A consistent angle of about 5-15 degrees throughout your stride is ideal, and any significant deviations may indicate potential issues with your core stability or posture.'''
-    hip_text = '''A critical joint for power generation and stability. A consistent angle of about 30-50 degrees throughout your stride is ideal, and any significant deviations may indicate potential issues with your hip flexor or glute strength.'''
-    knee_text = 'A key joint for shock absorption and propulsion. A consistent angle of about 160-180 degrees at heel strike and 120-140 degrees at toe-off is ideal, and any significant deviations may indicate potential issues with your quadriceps or hamstrings.'
-    ankle_text = 'Plays an essential roll for push-off and stability. A consistent angle of about 90-100 degrees at heel strike and 20-30 degrees at toe-off is ideal, and any significant deviations may indicate potential issues with your calf or Achilles tendon.'
-
-    pdf.ln(5)
-
-    pdf.set_text_color(255, 215, 0)  # Gold for Header
-    pdf.set_font("Arial", 'b', size=14)
-    pdf.cell(0, 10, "Joint Target Analysis", ln=True)
-
-    joint_targets = {
-    "Spine Segment Angle": {
-        "text": spine_text,
-        "color": (200, 162, 200)  # Purple
-    },
-    "Hips": {
-        "text": hip_text,
-        "color": (144, 238, 144)  # Green
-    },
-    "Knees": {
-        "text": knee_text,
-        "color": (173, 216, 230)  # Blue
-    },
-    "Ankles": {
-        "text": ankle_text,
-        "color": (255, 182, 193)  # Red
-    }
-}
-
-    for joint_label, data in joint_targets.items():
-        pdf.set_text_color(*data["color"])
-        pdf.set_font("Arial", style='B', size=font_size)
-        pdf.write(font_size / 2, f"{joint_label}: ")
-
-        pdf.set_font("Arial", size=font_size)
-        pdf.write(font_size / 2, data["text"] + "\n")
-        pdf.ln(1)
-
-    pdf.ln(10)
-
-    # ✅ Invitation to Optional Coaching Session
-    coaching_invite = "Want to Take Your Running to the Next Level? Consider scheduling an advanced gait analysis or personalized coaching session. Our expert team can help fine-tune your stride, optimize efficiency, and reduce injury risk."
-    pdf.set_text_color(255, 215, 0)  # Gold color for the title
-    pdf.set_font("Arial", style='B', size=14)  # Bold and slightly larger
-    pdf.cell(0, 10, "Coaching & Gait Review", ln=True)
-
-    pdf.set_text_color(255, 255, 255)  # White text for readability
-    pdf.set_font("Arial", size=font_size)
-    pdf.multi_cell(0, 7, coaching_invite)
-
-    # Highlight Contact Info with Bigger, Bold White Text
-    pdf.set_text_color(255, 255, 255)  # Bright green for attention
-    pdf.set_font("Arial", style='B', size=13)  # Bigger and bold
-
-    pdf.ln(5)
-
-    pdf.cell(0, 10, "Contact: digitalathlete80@gmail.com", ln=True)
+    pdf.cell(0, 10, "Key Insights from Your assessment", ln=True)
+            
+    pdf.cell(0, 10, "Contact: dh25587@essex.ac.uk", ln=True)
 
     pdf.set_text_color(255, 255, 255)  # Bright red for the email
     pdf.set_font("Arial", style='B', size=13)
-    pdf.cell(0, 10, "Website: stride-sync.streamlit.app", ln=True)
+    pdf.cell(0, 10, "Website: 5g4phealth.streamlit.app", ln=True)
     pdf.set_text_color(255, 255, 255)  # Bright red for the email
     pdf.set_font("Arial", style='B', size=13)
     pdf.cell(0, 10, "Scan the QR Code for recommended training videos", ln=True)
     pdf.ln(10)
 
     # ✅ Add a QR Code for the Website
-    qr_code_url = "https://stride-sync.streamlit.app"
+    qr_code_url = "https://5g4phealth.streamlit.app"
     qr_code_path = tempfile.mktemp(suffix=".png")
     qr_code = qrcode.make(qr_code_url)
     qr_code.save(qr_code_path)
@@ -407,7 +282,6 @@ def generate_pdf(pose_image_path, df_rom, spider_plot, asymmetry_plot, text_info
     pdf.output(pdf_file_path)
     
     return pdf_file_path
-
 
 def detect_peaks(data, column, prominence, distance):
     peaks, _ = find_peaks(data[column], prominence=prominence, distance=distance)
@@ -857,7 +731,7 @@ def butter_lowpass_filter(data, cutoff=6, fs=30, order=4):
     b, a = butter(order, normal_cutoff, btype='low', analog=False)
     return lfilter(b, a, data)
 
-def process_video(gait_type, camera_side, video_path, output_txt_path, frame_time, video_index):
+def process_video(gait_type, camera_side, video_path, frame_time, video_index):
     # add after uploading 
     cap = cv2.VideoCapture(video_path)
     fps = cap.get(cv2.CAP_PROP_FPS)
@@ -1342,7 +1216,8 @@ def process_video(gait_type, camera_side, video_path, output_txt_path, frame_tim
     st.plotly_chart(asymmetry_bar_plot, key=f"asymmetry_bar_plot_{video_index}_{camera_side}_{hash(video_path)}")
 
     # update with decision trees (if elif, for each category)
-    st.title('💡 How to improve your range of motion:')
+    st.markdown("<h2 style='text-align: center;'>Joint Angles:</h2>", unsafe_allow_html=True)
+
 
     ankle_text_info = ""
     knee_text_info = ""
@@ -1728,163 +1603,17 @@ def process_video(gait_type, camera_side, video_path, output_txt_path, frame_tim
         "Left Knee": filtered_left_knee_angles, "Right Knee": filtered_right_knee_angles,
         "Left Ankle": filtered_left_ankle_angles, "Right Ankle": filtered_right_ankle_angles
     })
-
-    # STRIDE CYCLE DETECTION
-    # with st.expander("Stride Cycle Analysis"):
-
-    #     strides = [f"Stride {i+1}" for i in range(min(len(peaks_left), len(mins_left), len(peaks_right), len(mins_right)))]
-        
-    #     # Plotly bar plot showing peaks and minima side by side with thinner bars
-    #     fig = go.Figure()
-    #     column_left = "Left Hip Angle (degrees)"
-    #     column_right = "Right Hip Angle (degrees)"
-    #     fig.add_trace(go.Bar(
-    #         y=hip_df[column_left].iloc[peaks_left][:len(strides)],
-    #         x=strides,
-    #         name="Left Peak Flexion",
-    #         marker_color='lightblue',
-    #         width=0.2
-    #     ))
-        
-    #     fig.add_trace(go.Bar(
-    #         y=hip_df[column_right].iloc[peaks_right][:len(strides)],
-    #         x=strides,
-    #         name="Right Peak Flexion",
-    #         marker_color='lightgreen',
-    #         width=0.2
-    #     ))
-
-    #     fig.add_trace(go.Bar(
-    #         y=hip_df[column_left].iloc[mins_left][:len(strides)],
-    #         x=strides,
-    #         name="Left Min Flexion",
-    #         marker_color='blue',
-    #         width=0.2
-    #     ))
-        
-    #     fig.add_trace(go.Bar(
-    #         y=hip_df[column_right].iloc[mins_right][:len(strides)],
-    #         x=strides,
-    #         name="Right Min Flexion",
-    #         marker_color='green',
-    #         width=0.2
-    #     ))
-        
-    #     fig.update_layout(
-    #         title="Joint Flexion Angles Per Stride",
-    #         yaxis_title="Hip Angle (degrees)",
-    #         barmode='group',  # Ensures bars are side by side
-    #         xaxis=dict(tickmode='array', tickvals=list(range(len(strides))), ticktext=strides)
-    #     )
-        
-    #     st.plotly_chart(fig, key=f"hip_expander_{video_index}_{camera_side}_{hash(video_path)}")
-
-    #     strides = [f"Stride {i+1}" for i in range(min(len(peaks_left), len(mins_left), len(peaks_right), len(mins_right)))]
-
-    #     # Plotly bar plot showing peaks and minima side by side with thinner bars
-    #     fig = go.Figure()
-    #     column_left = "Left Knee Angle (degrees)"
-    #     column_right = "Right Knee Angle (degrees)"
-
-    #     fig.add_trace(go.Bar(
-    #         y=knee_df[column_left].iloc[peaks_left][:len(strides)],
-    #         x=strides,
-    #         name="Left Peak Flexion",
-    #         marker_color='lightblue',
-    #         width=0.2
-    #     ))
-
-    #     fig.add_trace(go.Bar(
-    #         y=knee_df[column_right].iloc[peaks_right][:len(strides)],
-    #         x=strides,
-    #         name="Right Peak Flexion",
-    #         marker_color='lightgreen',
-    #         width=0.2
-    #     ))
-
-    #     fig.add_trace(go.Bar(
-    #         y=knee_df[column_left].iloc[mins_left][:len(strides)],
-    #         x=strides,
-    #         name="Left Min Flexion",
-    #         marker_color='blue',
-    #         width=0.2
-    #     ))
-
-    #     fig.add_trace(go.Bar(
-    #         y=knee_df[column_right].iloc[mins_right][:len(strides)],
-    #         x=strides,
-    #         name="Right Min Flexion",
-    #         marker_color='green',
-    #         width=0.2
-    #     ))
-
-    #     fig.update_layout(
-    #         title="Joint Flexion Angles Per Stride",
-    #         yaxis_title="Knee Angle (degrees)",
-    #         barmode='group',  # Ensures bars are side by side
-    #         xaxis=dict(tickmode='array', tickvals=list(range(len(strides))), ticktext=strides)
-    #     )
-
-    #     st.plotly_chart(fig, key=f"knee_expander_{video_index}_{camera_side}_{hash(video_path)}")
-
-    #     # ANKLE CYCLES
-
-    #     strides = [f"Stride {i+1}" for i in range(min(len(peaks_left), len(mins_left), len(peaks_right), len(mins_right)))]
-
-    #     # Plotly bar plot showing peaks and minima side by side with thinner bars
-    #     fig = go.Figure()
-    #     column_left = "Left Ankle Angle (degrees)"
-    #     column_right = "Right Ankle Angle (degrees)"
-
-    #     fig.add_trace(go.Bar(
-    #         y=ankle_df[column_left].iloc[peaks_left][:len(strides)],
-    #         x=strides,
-    #         name="Left Peak Flexion",
-    #         marker_color='lightblue',
-    #         width=0.2
-    #     ))
-
-    #     fig.add_trace(go.Bar(
-    #         y=ankle_df[column_right].iloc[peaks_right][:len(strides)],
-    #         x=strides,
-    #         name="Right Peak Flexion",
-    #         marker_color='lightgreen',
-    #         width=0.2
-    #     ))
-
-    #     fig.add_trace(go.Bar(
-    #         y=ankle_df[column_left].iloc[mins_left][:len(strides)],
-    #         x=strides,
-    #         name="Left Min Flexion",
-    #         marker_color='blue',
-    #         width=0.2
-    #     ))
-
-    #     fig.add_trace(go.Bar(
-    #         y=ankle_df[column_right].iloc[mins_right][:len(strides)],
-    #         x=strides,
-    #         name="Right Min Flexion",
-    #         marker_color='green',
-    #         width=0.2
-    #     ))
-
-    #     fig.update_layout(
-    #         title="Joint Flexion Angles Per Stride",
-    #         yaxis_title="Ankle Angle (degrees)",
-    #         barmode='group',  # Ensures bars are side by side
-    #         xaxis=dict(tickmode='array', tickvals=list(range(len(strides))), ticktext=strides)
-    #     )
-
-    #     st.plotly_chart(fig, key=f"ankle_expander_{video_index}_{camera_side}_{hash(video_path)}")
-
+    
     ### END CROP ###
   # show tables
     df = pd.DataFrame({'Time': filtered_time, 'Spine Segment Angles': filtered_spine_segment_angles, 'Left Joint Hip': filtered_left_hip_angles, 'Right Hip': filtered_right_hip_angles, 'Left Knee': filtered_left_knee_angles, 'Right Knee': filtered_right_knee_angles, 'Left Ankle': filtered_left_ankle_angles, 'Right Ankle': filtered_right_ankle_angles})
-    st.write('### Joint Angles (°)')
+
+    st.markdown("<h2 style='text-align: center;'>Joint Angles (°)</h2>", unsafe_allow_html=True)
+
 
     st.dataframe(df)
 
-    st.write('### Range of Motion')
+    st.markdown("<h2 style='text-align: center;'>Range of Motion</h2>", unsafe_allow_html=True)
     # create dataframe of range of motion
     
     df_rom = pd.DataFrame({'Joint': ['Spine Segment', 'Left Hip', 'Right Hip', 'Left Knee', 'Right Knee', 'Left Ankle', 'Right Ankle'], 
@@ -1899,15 +1628,20 @@ def process_video(gait_type, camera_side, video_path, output_txt_path, frame_tim
     # pca_checkbox = st.checkbox("Perform Principle Component Analysis", value=False, key=f"pca_{video_index}_{camera_side}")
     # if pca_checkbox:
     #     perform_pca(joint_angle_df, video_index)
+    text_info = text_info if 'text_info' in locals() else {}
 
     _, __, pose_image_path = process_first_frame_report(video_path, video_index)
-    pdf_path = generate_pdf(pose_image_path, df_rom, spider_plot, asymmetry_bar_plot, text_info, camera_side, gait_type)
+    # pdf_path = generate_pdf(pose_image_path, spider_plot)
+    # download the pdf
     # with open(pdf_path, "rb") as file:
-    # st.download_button("Download Stride Sync Report", file, "Stride_Sync_Report.pdf", "application/pdf", key=f"pdf_report_{video_index}_{camera_side}_{hash(video_path)}")
+        # st.download_button("Download Mobility Scorecard", file, "Mobility Scorecard.pdf", "application/pdf", key=f"pdf_report")
 
     # email me my Stride Sync Report
-    # email = st.text_input("Enter your email address to receive your Stride Sync Report",  key=f"text_input_email_{video_index}_{camera_side}_{hash(video_path)}")
-    # if st.button("Email Stride Sync Report", key=f"email_pdf_{video_index}_{camera_side}_{hash(video_path)}"):
+    # email = st.text_input("Enter your email address to receive your Mobility Scorecard",  key=f"text_input_email_{video_index}_{camera_side}_{hash(video_path)}")
+    # Posture & Performance Report
+
+
+    # if st.button("Email Mobility Scorecard", key=f"email_pdf_{video_index}_{camera_side}_{hash(video_path)}"):
     #     send_email(email, pdf_path)
 
 def send_email(to_email, attachment_path):
@@ -1968,15 +1702,14 @@ def main():
     iphone_mockup = r"C:\Users\ano\Box\myBox\5G4PHealth App Code\5G4PHealth\photos\pickup pen mockup 2 iphone white background.gif"
     # play gif
     st.image(iphone_mockup, caption="5G4PHealth App", use_column_width=True)
-   
-    st.title("Try Example Videos")
+    st.markdown("<h2 style='text-align: center;'>Try an example video</h2>", unsafe_allow_html=True)
     example_video = st.radio("Select an example video", 
             ["Select an option", "Pickup pen video", "Sit to stand video", "Single Leg Squat", "Depth Squat", "Timed Up and Go Test"],
             index=0)  
     if example_video == "Select an option":
         st.warning("Please select a valid option.")
     
-    if example_video == "Pickup pen video":
+    elif example_video == "Pickup pen video":
         camera_side = "side"
         gait_type = "pickup pen"
         video_url = r"C:\Users\ano\Box\myBox\5G4PHealth App Code\5G4PHealth\photos\pickup pen 3 sec demo.mp4"
@@ -1984,38 +1717,36 @@ def main():
         st.video(video_url)
         # Video URL from GitHub
         for idx, video_file in enumerate([video_url]):
-            output_txt_path = '/workspaces/PolarPlotter/results/joint_angles.txt'
             frame_number, frame_time, image_path = process_first_frame(video_file, video_index=idx)
-            process_video(gait_type, camera_side, video_file, output_txt_path, frame_time, video_index=idx)
+            process_video(gait_type, camera_side, video_file, frame_time, video_index=idx)
 
-    if example_video == "Sit to stand video":
+    elif example_video == "Sit to stand video":
         camera_side = "side"
         gait_type = "pickup pen"
         video_url = r"C:\Users\ano\Box\myBox\5G4PHealth App Code\5G4PHealth\photos\sit2stand 1 rep.MOV"
         st.video(video_url)
         # Video URL from GitHub
         for idx, video_file in enumerate([video_url]):
-            output_txt_path = '/workspaces/PolarPlotter/results/joint_angles.txt'
             frame_number, frame_time, image_path = process_first_frame(video_file, video_index=idx)
-            process_video(gait_type, camera_side, video_file, output_txt_path, frame_time, video_index=idx)
+            process_video(gait_type, camera_side, video_file, frame_time, video_index=idx)
 
-    if example_video == "Single Leg Squat":
+    elif example_video == "Single Leg Squat":
         camera_side = "side"
         gait_type = "pickup pen"
         video_url = r"C:\Users\ano\Box\myBox\5G4PHealth App Code\5G4PHealth\photos\single leg squat demo.MOV"
         st.video(video_url)
         # Video URL from GitHub
         for idx, video_file in enumerate([video_url]):
-            output_txt_path = '/workspaces/PolarPlotter/results/joint_angles.txt'
             frame_number, frame_time, image_path = process_first_frame(video_file, video_index=idx)
-            process_video(gait_type, camera_side, video_file, output_txt_path, frame_time, video_index=idx)
+            process_video(gait_type, camera_side, video_file, frame_time, video_index=idx)
 
     
     # user_footwear = st.text_input("Enter your footwear", key="user_footwear") # maybe checkbox neutral, support, stability --> Opens up a catalogue at their stores...
 
-
     # File uploader for user to upload their own video
-    video_files = st.file_uploader("Upload side walking video(s)", type=["mp4", "avi", "mov"], accept_multiple_files=True, key="side_walking")
+    st.markdown("<h2 style='text-align: center;'>Upload your own video(s)</h2>", unsafe_allow_html=True)
+
+    video_files = st.file_uploader("Upload side video(s)", type=["mp4", "avi", "mov"], accept_multiple_files=True, key="side_walking")
     if video_files:
         camera_side = "side"
         gait_type = "walking"
@@ -2024,12 +1755,11 @@ def main():
                 temp_video_file.write(video_file.read())
                 temp_video_path = temp_video_file.name
                 temp_video_file.close()
-                output_txt_path = '/workspaces/PolarPlotter/results/joint_angles.txt'
                 frame_number, frame_time, image_path = process_first_frame(temp_video_path, video_index=idx)
-                process_video(gait_type, camera_side, temp_video_path, output_txt_path, frame_time, video_index=idx)
+                process_video(gait_type, camera_side, temp_video_path, frame_time, video_index=idx)
 
     # File uploader for user to upload their own video
-    video_files = st.file_uploader("Upload back walking video(s)", type=["mp4", "avi", "mov"], accept_multiple_files=True, key="back_walking")
+    video_files = st.file_uploader("Upload front video(s)", type=["mp4", "avi", "mov"], accept_multiple_files=True, key="back_walking")
     if video_files:
         camera_side = "back"
         gait_type = "walking"
@@ -2038,40 +1768,13 @@ def main():
                 temp_video_file.write(video_file.read())
                 temp_video_path = temp_video_file.name
                 temp_video_file.close()
-                output_txt_path = '/workspaces/PolarPlotter/results/joint_angles.txt'
                 frame_number, frame_time, image_path = process_first_frame(temp_video_path, video_index=idx)
-                process_video(gait_type, camera_side, temp_video_path, output_txt_path, frame_time, video_index=idx)
+                process_video(gait_type, camera_side, temp_video_path, frame_time, video_index=idx)
 
-    video_files = st.file_uploader("Upload side running video(s)", type=["mp4", "avi", "mov"], accept_multiple_files=True, key="side_running")
-    if video_files:
-        camera_side = "side"
-        gait_type = "running"
-        for idx, video_file_back in enumerate(video_files):
-            with tempfile.NamedTemporaryFile(delete=False, suffix=".mp4") as temp_video_file:
-                temp_video_file.write(video_file_back.read())
-                temp_video_path = temp_video_file.name
-                temp_video_file.close()
-                output_txt_path = '/workspaces/PolarPlotter/results/joint_angles.txt'
-                frame_number, frame_time, image_path = process_first_frame(temp_video_path, video_index=idx)
-                process_video(gait_type, camera_side, temp_video_path, output_txt_path, frame_time, video_index=idx)
-
-    # File uploader for back video(s)
-    video_files = st.file_uploader("Upload back running video(s)", type=["mp4", "avi", "mov"], accept_multiple_files=True, key="back_running")
-    if video_files:
-        camera_side = "back"
-        gait_type = "running"
-        for idx, video_file_back in enumerate(video_files):
-            with tempfile.NamedTemporaryFile(delete=False, suffix=".mp4") as temp_video_file:
-                temp_video_file.write(video_file_back.read())
-                temp_video_path = temp_video_file.name
-                temp_video_file.close()
-                output_txt_path = '/workspaces/PolarPlotter/results/joint_angles.txt'
-                frame_number, frame_time, image_path = process_first_frame(temp_video_path, video_index=idx)
-                process_video(gait_type, camera_side, temp_video_path, output_txt_path, frame_time, video_index=idx)
-
-    st.title("Overview of 5G4PHealth")
-    st.write("5G4PHealth is a mobile app that uses computer vision and machine learning to analyze your gait and provide personalized feedback. The app can be used to assess your gait, identify any issues, and provide recommendations for improvement.")
-    st.write("5G4PHealth is designed to be used by anyone who wants to improve their gait, whether they are a runner, walker, or just looking to improve their overall health. The app is easy to use and provides real-time feedback on your gait.")
+    
+    st.markdown("<h2 style='text-align: center;'>Overview of 5G4PHealth</h2>", unsafe_allow_html=True)
+    st.write("5G4PHealth is a mobile app that uses computer vision and machine learning to analyze your movement patterns and provide personalized feedback. The app can be used to assess your body's mechanics (e.g., joint angles), identify any issues, and provide recommendations for improvement.")
+    st.write("5G4PHealth is designed to be used by anyone who wants to improve their biomechanics, whether they are starting physiotherapy, or just looking to improve their overall health. The app is easy to use and provides near real-time feedback on your motion.")
     st.write("5G4PHealth is currently in development and will be available for download in the near future. Stay tuned for updates!")
     st.write("For more information, please visit our website: [5G4PHealth](https://5g4phealth.com)")
     main_image = r"C:\Users\ano\Box\myBox\5G4PHealth App Code\5G4PHealth\photos\5G4PHealth overview.png"

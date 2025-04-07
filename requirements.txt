@@ -1,7 +1,26 @@
-# decorator==4.4.2
-# imageio_ffmpeg==0.4.9
-# moviepy==1.0.3 
-# cv2
+braceexpand
+colorlog
+einops
+hydra-core
+imageio[ffmpeg]
+ipdb
+matplotlib
+numpy>=1.24.4
+omegaconf
+opencv_python
+pyrender
+pytorch_lightning
+Requests
+rich
+setuptools
+smplx
+timm
+torch
+tqdm
+trimesh
+webdataset
+wis3d
+yacs
 
 mediapipe
 moviepy

@@ -1,5 +1,3 @@
-
-
 import streamlit as st
 
 st.markdown("<h1 style='text-align: center;'>Welcome to 5G4PHealth!</h1>", unsafe_allow_html=True)
@@ -34,6 +32,56 @@ from dotenv import load_dotenv
 import streamlit as st
 import matplotlib.pyplot as plt
 import numpy as np
+
+### HSMR ###
+# from pathlib import Path
+
+# # Clone the repo.
+# !git clone https://github.com/IsshikiHugh/HSMR
+# proj_root = str(Path('HSMR').absolute())
+
+# # Install HSMR. (Click cancel if you see warnings.)
+
+# Install Dependencies
+# pip install -r requirements.txt  # make sure torch version is aligned with $CUDA_HOME
+# pip install "git+https://github.com/facebookresearch/detectron2.git"
+# pip install "git+https://github.com/mattloper/chumpy"
+# pip install -e .
+
+
+# quick start for HSMR: 
+# Regressors
+# 1.
+# mkdir -p data_inputs/body_models
+
+# POWERSHELL >> Invoke-WebRequest -Uri "https://huggingface.co/IsshikiHugh/HSMR-data_inputs/resolve/main/body_models/J_regressor_SMPL_MALE.pkl" -OutFile "data_inputs\body_models\J_regressor_SMPL_MALE.pkl"
+# >> Invoke-WebRequest -Uri "https://huggingface.co/IsshikiHugh/HSMR-data_inputs/resolve/main/body_models/SMPL_to_J19.pkl" -OutFile "data_inputs\body_models\SMPL_to_J19.pkl"
+# >> Invoke-WebRequest -Uri "https://huggingface.co/IsshikiHugh/HSMR-data_inputs/resolve/main/body_models/J_regressor_SKEL_mix_MALE.pkl" -OutFile "data_inputs\body_models\J_regressor_SKEL_mix_MALE.pkl"
+
+# 2.
+# HSMR Model
+# mkdir -p data_inputs/released_models/
+# POWERSHELL: >> Invoke-WebRequest -Uri "https://huggingface.co/IsshikiHugh/HSMR-data_inputs/resolve/main/released_models/HSMR-ViTH-r1d1.tar.gz" -OutFile "data_inputs\released_models\HSMR-ViTH-r1d1.tar.gz"
+# >> Invoke-WebRequest -Uri "https://huggingface.co/IsshikiHugh/HSMR-data_inputs/resolve/main/released_models/HSMR-ViTH-r1d1.tar.gz" -OutFile "data_inputs\released_models\HSMR-ViTH-r1d1.tar.gz"
+# tar -xzvf HSMR-ViTH-r1d1.tar.gz -C data_inputs/released_models/
+# rm HSMR-ViTH-r1d1.tar.gz
+
+# 3. Download skel_models_v1.1.zip from https://skel.is.tue.mpg.de/login.php and unzip it.
+# mkdir -p data_inputs/body_models
+# mv /path/to/skel_models_v1.1 data_inputs/body_models/skel
+
+# # Single file wil be identified as a video by default if `--input_type` is not specified.
+# python exp/run_demo.py --input_path "data_inputs/demo/example_videos/gymnasts.mp4"
+
+# Folders wil be identified as image folders by default if `--input_type` is not specified.
+# python exp/run_demo.py --input_path "data_inputs/demo/example_imgs"
+
+# Tips: Rendering skeleton meshes is pretty slow. For videos, adding --ignore_skel or decrease --max_instances could boost the speed. 
+# Check lib/kits/hsmr_demo.py:parse_args() for more details.
+
+
+### HSMR ###
+
 
 # Sample data: replace with your actual model scores
 # categories = ['Code', 'Factuality', 'Reasoning', 'Science', 'Multilingual', 'Vision']
@@ -868,6 +916,10 @@ def process_video(gait_type, camera_side, video_path, frame_time, video_index):
     filtered_left_ankle_angles = np.array(left_ankle_angles)[mask]
     filtered_right_ankle_angles = np.array(right_ankle_angles)[mask]
 
+    spine_data = {
+    "Time (s)": filtered_time,
+    "Spine Segment Angle (degrees)": filtered_spine_segment_angles
+    }
     hip_data = {
     "Time (s)": filtered_time,
     "Left Hip Angle (degrees)": filtered_left_hip_angles,
@@ -887,9 +939,21 @@ def process_video(gait_type, camera_side, video_path, frame_time, video_index):
     }
 
     # Create a DataFrame
+    spine_df = pd.DataFrame(spine_data)
     hip_df = pd.DataFrame(hip_data)
     knee_df = pd.DataFrame(knee_data)
     ankle_df = pd.DataFrame(ankle_data)
+
+    # SPINE SEGMENT RANGES
+    column = "Spine Segment Angle (degrees)"
+    prominence = 3
+    distance = fps / 2  # Assuming fps/2 equivalent
+    peaks = detect_peaks(spine_df, column, prominence, distance)
+    mins = detect_mins(spine_df, column, prominence, distance)
+    spine_mins_mean = np.mean(spine_df[column].iloc[mins])
+    spine_mins_std = np.std(spine_df[column].iloc[mins])
+    spine_peaks_mean = np.mean(spine_df[column].iloc[peaks])
+    spine_peaks_std = np.std(spine_df[column].iloc[peaks])
 
      # HIP RANGES
     column_left = "Left Hip Angle (degrees)"
@@ -965,7 +1029,7 @@ def process_video(gait_type, camera_side, video_path, frame_time, video_index):
     hip_left_rom_mean = hip_left_peaks_mean - hip_left_mins_mean
     ankle_right_rom_mean = ankle_right_peaks_mean - ankle_right_mins_mean
     ankle_left_rom_mean = ankle_left_peaks_mean - ankle_left_mins_mean
-    spine_segment_rom_mean = np.ptp(filtered_spine_segment_angles)
+    spine_segment_rom_mean = spine_peaks_mean - spine_mins_mean
 
     spine_rom_good = 10 # 5 to 15 
     ankle_plantar_good = 55 # 40 to 55

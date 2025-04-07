@@ -1548,7 +1548,10 @@ def process_video(gait_type, camera_side, video_path, frame_time, video_index):
     with st.expander("Click here to see your spine segment angle data"):
         fig = go.Figure()
         fig.add_trace(go.Scatter(x=filtered_time, y=filtered_spine_segment_angles, mode='lines', name="Spine Segment Angles"))
-        fig.add_trace(go.Scatter(x=[frame_time, frame_time], y=[min(filtered_spine_segment_angles), max(filtered_spine_segment_angles)], mode='lines', line=dict(color='red', dash='dash'), name='Selected Frame'))
+        try:
+            fig.add_trace(go.Scatter(x=[frame_time, frame_time], y=[min(filtered_spine_segment_angles), max(filtered_spine_segment_angles)], mode='lines', line=dict(color='red', dash='dash'), name='Selected Frame'))
+        except:
+            pass
         fig.update_layout(title=f"Spine Segment Angles", xaxis_title="Time (s)", yaxis_title="Angle (degrees)")
         st.plotly_chart(fig, key=f"spine_segment_expander_{video_index}_{camera_side}_{hash(video_path)}")
 

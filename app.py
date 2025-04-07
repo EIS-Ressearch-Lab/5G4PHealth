@@ -1009,18 +1009,18 @@ def process_video(gait_type, camera_side, video_path, frame_time, video_index):
     ankle_right_peaks_mean = np.mean(ankle_df[column_right].iloc[peaks_right])
     ankle_right_peaks_std = np.std(ankle_df[column_right].iloc[peaks_right])
    
-    try:
-        rom_values = [
-        np.ptp(filtered_right_knee_angles),
-        np.ptp(filtered_right_hip_angles),
-        np.ptp(filtered_spine_segment_angles),
-        np.ptp(filtered_left_hip_angles),
-        np.ptp(filtered_left_knee_angles),
-        np.ptp(filtered_left_ankle_angles),
-        np.ptp(filtered_right_ankle_angles)
-            ]
-    except ValueError:
-        st.error("Your cropped out too much data. Please include more data by expanding the cropping slider.")
+    # try:
+    rom_values = [
+    np.ptp(filtered_right_knee_angles),
+    np.ptp(filtered_right_hip_angles),
+    np.ptp(filtered_spine_segment_angles),
+    np.ptp(filtered_left_hip_angles),
+    np.ptp(filtered_left_knee_angles),
+    np.ptp(filtered_left_ankle_angles),
+    np.ptp(filtered_right_ankle_angles)
+        ]
+    # except ValueError:
+    #     st.error("Your cropped out too much data. Please include more data by expanding the cropping slider.")
     
     joint_labels = ['Right Joint Knee', 'Right Joint Hip', 'Spine Segment', 'Left Joint Hip', 'Left Joint Knee', 'Left Joint Ankle', 'Right Joint Ankle']
     knee_right_rom_mean = knee_right_peaks_mean - knee_right_mins_mean
@@ -1167,15 +1167,6 @@ def process_video(gait_type, camera_side, video_path, frame_time, video_index):
       
     # Create polar scatter plot with color-coded points
     spider_plot = go.Figure()
-    # side walk --> moderate, poor, ideal, yours, poor inner
-   
-    # back walk --> poor 0.9, moderate 0.9, ideal 0.85, yours 0.75
-
-    # side run --> moderate, poor, ideal, yours, poor inner
-
-    # back run --> poor, moderate, ideal, yours
-
-    # Plot ideal target ROM values
 
     spider_plot.add_trace(go.Scatterpolar(
         r=bad_rom_outer,
@@ -1219,16 +1210,6 @@ def process_video(gait_type, camera_side, video_path, frame_time, video_index):
         line=dict(color='#1E90FF', width=2)
     ))
 
-    # spider_plot.add_trace(go.Scatterpolar(
-    #     r=bad_rom_inner,
-    #     theta=joint_labels,
-    #     fill='toself',
-    #     fillcolor='rgba(255, 76, 76, 0.95)', # fillcolor='rgba(255, 0, 0, 0.6)'  # red with 60% opacity
-    #     name='Poor Inner',  # Empty name to hide from legend
-    #     marker=dict(color='#FF4C4C', size=0.1),
-    #     line=dict(color='#FF4C4C', width=0.1)  # Dashed green outline for ideal ROM
-    # ))
-
     # Get max range of motion value
     max_all_joint_angles = max(max(rom_values), max(bad_rom_outer), max(bad_rom_inner), max(ideal_rom_outer)) + 10
 
@@ -1259,15 +1240,6 @@ def process_video(gait_type, camera_side, video_path, frame_time, video_index):
 
     st.plotly_chart(spider_plot, key=f"spider_plot_{video_index}_{camera_side}_{hash(video_path)}")
 
-    # st.markdown('### title')
-    
-    # KEY INSIGHT: Frontal and transverse plane motions (e.g., eversion, adduction) often play a more critical role in injury risk than sagittal plane mechanics
-
-    # Asymmetries in ROM (e.g., >10–15% difference between limbs) are significant predictors of injury across joints (https://pmc.ncbi.nlm.nih.gov/articles/PMC11144664/)
-    # Asymmetry ≥6.5° between ankles raises musculoskeletal injury risk by 4–5× in athletes (https://www.ejgm.co.uk/download/role-of-ankle-dorsiflexion-in-sports-performance-and-injury-risk-a-narrative-review-13412.pdf)
-    # Asymmetry matters more than absolute values: ≥6.5° ankle dorsiflexion asymmetry quadruples injury risk (https://www.ejgm.co.uk/download/role-of-ankle-dorsiflexion-in-sports-performance-and-injury-risk-a-narrative-review-13412.pdf).
-    # Muscle flexibility: Gastrocnemius-soleus tightness limits ankle ROM, altering proximal joint mechanics: https://pmc.ncbi.nlm.nih.gov/articles/PMC9865943/
-
     # Mean ROM for the assymetry bar plot
     left_hip = hip_left_peaks_mean - hip_left_mins_mean
     right_hip = hip_right_peaks_mean - hip_right_mins_mean
@@ -1281,7 +1253,6 @@ def process_video(gait_type, camera_side, video_path, frame_time, video_index):
 
     # update with decision trees (if elif, for each category)
     st.markdown("<h2 style='text-align: center;'>Joint Angles:</h2>", unsafe_allow_html=True)
-
 
     ankle_text_info = ""
     knee_text_info = ""
@@ -1548,10 +1519,7 @@ def process_video(gait_type, camera_side, video_path, frame_time, video_index):
     with st.expander("Click here to see your spine segment angle data"):
         fig = go.Figure()
         fig.add_trace(go.Scatter(x=filtered_time, y=filtered_spine_segment_angles, mode='lines', name="Spine Segment Angles"))
-        try:
-            fig.add_trace(go.Scatter(x=[frame_time, frame_time], y=[min(filtered_spine_segment_angles), max(filtered_spine_segment_angles)], mode='lines', line=dict(color='red', dash='dash'), name='Selected Frame'))
-        except:
-            pass
+        fig.add_trace(go.Scatter(x=[frame_time, frame_time], y=[min(filtered_spine_segment_angles), max(filtered_spine_segment_angles)], mode='lines', line=dict(color='red', dash='dash'), name='Selected Frame'))
         fig.update_layout(title=f"Spine Segment Angles", xaxis_title="Time (s)", yaxis_title="Angle (degrees)")
         st.plotly_chart(fig, key=f"spine_segment_expander_{video_index}_{camera_side}_{hash(video_path)}")
 

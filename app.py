@@ -1736,7 +1736,7 @@ def main():
 
     iphone_mockup = r"/workspaces/5G4PHealth/photos/pickup pen mockup 2 iphone white background.gif"
     # play gif
-    st.image(iphone_mockup, caption="5G4PHealth App", use_container_width =True)
+    st.image(iphone_mockup, caption="5G4PHealth App", use_column_width =True)
     st.markdown("<h2 style='text-align: center;'>Try an example video</h2>", unsafe_allow_html=True)
     example_video = st.radio("Select an example video", 
             ["Select an option", "Pickup pen video", "Sit to stand video", "Single Leg Squat", "Depth Squat", "Timed Up and Go Test"],
@@ -1814,7 +1814,7 @@ def main():
     st.write("For more information, please visit our website: [5G4PHealth](https://5g4phealth.com)")
     main_image = r"/workspaces/5G4PHealth/photos/5G4PHealth overview.png"
 
-    st.image(main_image, caption="Overview of 5G4PHealth", use_container_width=True)
+    st.image(main_image, caption="Overview of 5G4PHealth", use_column_width=True)
 
 if __name__ == "__main__":
     main()

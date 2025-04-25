@@ -1734,9 +1734,9 @@ def send_email(to_email, attachment_path):
 def main():
     # st.title("Biomechanics Analysis from Video")
 
-    iphone_mockup = r"C:\Users\ano\Box\myBox\5G4PHealth App Code\5G4PHealth\photos\pickup pen mockup 2 iphone white background.gif"
+    iphone_mockup = r"/workspaces/5G4PHealth/photos/pickup pen mockup 2 iphone white background.gif"
     # play gif
-    st.image(iphone_mockup, caption="5G4PHealth App", use_column_width=True)
+    st.image(iphone_mockup, caption="5G4PHealth App", use_container_width =True)
     st.markdown("<h2 style='text-align: center;'>Try an example video</h2>", unsafe_allow_html=True)
     example_video = st.radio("Select an example video", 
             ["Select an option", "Pickup pen video", "Sit to stand video", "Single Leg Squat", "Depth Squat", "Timed Up and Go Test"],
@@ -1747,7 +1747,7 @@ def main():
     elif example_video == "Pickup pen video":
         camera_side = "side"
         gait_type = "pickup pen"
-        video_url = r"C:\Users\ano\Box\myBox\5G4PHealth App Code\5G4PHealth\photos\pickup pen 3 sec demo.mp4"
+        video_url = r"/workspaces/5G4PHealth/photos/pickup pen 3 sec demo.mp4"
         # st.image(github_url + "photos/pickup pen no skeleton sharp.jpg", caption="Example Pickup Pen Video", width=155)
         st.video(video_url)
         # Video URL from GitHub
@@ -1758,7 +1758,7 @@ def main():
     elif example_video == "Sit to stand video":
         camera_side = "side"
         gait_type = "pickup pen"
-        video_url = r"C:\Users\ano\Box\myBox\5G4PHealth App Code\5G4PHealth\photos\sit2stand 1 rep.MOV"
+        video_url = r"/workspaces/5G4PHealth/photos/sit2stand 1 rep.MOV"
         st.video(video_url)
         # Video URL from GitHub
         for idx, video_file in enumerate([video_url]):
@@ -1768,7 +1768,7 @@ def main():
     elif example_video == "Single Leg Squat":
         camera_side = "side"
         gait_type = "pickup pen"
-        video_url = r"C:\Users\ano\Box\myBox\5G4PHealth App Code\5G4PHealth\photos\single leg squat demo.MOV"
+        video_url = r"/workspaces/5G4PHealth/photos/single leg squat demo.MOV"
         st.video(video_url)
         # Video URL from GitHub
         for idx, video_file in enumerate([video_url]):
@@ -1812,9 +1812,9 @@ def main():
     st.write("5G4PHealth is designed to be used by anyone who wants to improve their biomechanics, whether they are starting physiotherapy, or just looking to improve their overall health. The app is easy to use and provides near real-time feedback on your motion.")
     st.write("5G4PHealth is currently in development and will be available for download in the near future. Stay tuned for updates!")
     st.write("For more information, please visit our website: [5G4PHealth](https://5g4phealth.com)")
-    main_image = r"C:\Users\ano\Box\myBox\5G4PHealth App Code\5G4PHealth\photos\5G4PHealth overview.png"
+    main_image = r"/workspaces/5G4PHealth/photos/5G4PHealth overview.png"
 
-    st.image(main_image, caption="Overview of 5G4PHealth", use_column_width=True)
+    st.image(main_image, caption="Overview of 5G4PHealth", use_container_width=True)
 
 if __name__ == "__main__":
     main()
